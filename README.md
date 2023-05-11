@@ -90,3 +90,139 @@ terraform destroy
 ### Create a VPC with Terraform 
 
 ![](TerraformHybrid.jpeg)
+
+1. within our main.tf we need to add this code for the different components of a VPC
+
+```
+# Create VPC within AWS resource
+resource "aws_vpc" "main" {
+ cidr_block = "10.0.0.0/16"
+
+ tags = {
+   Name = "Reis_tech221_VPC_terraform"
+ }
+}
+
+
+# Create Subnets
+resource "aws_subnet" "public_subnets" {
+ vpc_id     = aws_vpc.main.id
+ cidr_block = var.public_subnet_cidrs
+
+ tags = {
+   Name = "Reis_tech221_public_subnet"
+ }
+}
+
+resource "aws_subnet" "private_subnets" {
+ vpc_id     = aws_vpc.main.id
+ cidr_block = var.private_subnet_cidrs
+
+ tags = {
+   Name = "Reis_tech221_private_subnet"
+ }
+}
+
+# Set-up internet Gate-way
+resource "aws_internet_gateway" "gw" {
+ vpc_id = aws_vpc.main.id
+ 
+ tags = {
+   Name = "Reis_tech221_VPC_IG_Terraform"
+ }
+}
+  
+# Create Route Table
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw.id
+  }
+  
+  route {  
+    ipv6_cidr_block = "::/0"
+    gateway_id      = aws_internet_gateway.gw.id
+  }
+    
+  tags = {
+    Name = "Public Route Table"
+  }
+}
+    
+# Make it accessable over internet
+    
+resource "aws_route_table_association" "public_1_rt_a" {
+  subnet_id      = aws_subnet.public_subnets.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+# Create SG
+
+resource "aws_security_group" "web_sg" {
+  name   = "HTTP and SSH" 
+  vpc_id = aws_vpc.main.id
+        
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# let's create a service on AWS
+# which service -EC2
+resource "aws_instance" "app_instance" {
+        # which AMI to use
+        ami = var.ami_id
+        instance_type = "t2.micro"
+        # do you need the public IP
+        associate_public_ip_address = true
+        key_name = "tech221"
+    
+        subnet_id                   = aws_subnet.public_subnets.id
+        vpc_security_group_ids      = [aws_security_group.web_sg.id]
+  
+        tags = {
+          Name = "tech221_reis_terraform_app"
+    
+        }
+}  
+```
+
+2. Then within our `variable.tf` file we need to add
+
+```
+variable "ami_id" {
+    default = "ami-09c92f12073c29174"
+}
+
+variable "public_subnet_cidrs" {
+ type        = string
+ description = "Public Subnet CIDR values"
+ default     = "10.0.1.0/24"
+}
+ 
+variable "private_subnet_cidrs" {
+ type        = string
+ description = "Private Subnet CIDR values"
+ default     = "10.0.2.0/24"
+}
+```
+
+3. On Our git bash terminal we can now do 
+
+```
+terraform plan
+
+terraform apply
+```
