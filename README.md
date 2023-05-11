@@ -28,6 +28,8 @@ brew upgrade hashicorp/tap/terraform
 export AWS_ACCESS_KEY_ID=<add_your_access_ID>
 
 export AWS_SECRET_ACCESS_KEY=<add_your_access_secrect_key>
+
+export AWS_DEFAULT_REGION="eu-west-1"
 ```
 
 We can check they exist by using `printenv`
@@ -45,10 +47,6 @@ sudo nano main.tf
 # how to codify with terraform - syntax - name of resource {key = value} {sdfsdg}
 # most commonly used commands - terraform init - terraform plan - terraform apply
 
-provider "aws" {
-        region = "eu-west-1"
-
-}
 # create a service on AWS
 # which service? - EC2
 resource "aws_instance" "app_instance" {
@@ -88,3 +86,7 @@ terraform apply
 ```
 terraform destroy
 ```
+
+### Create a VPC with Terraform 
+
+![](TerraformHybrid.jpeg)
