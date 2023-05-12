@@ -96,7 +96,7 @@ terraform destroy
 ```
 # Create VPC within AWS resource
 resource "aws_vpc" "main" {
- cidr_block = "10.0.0.0/16"
+ cidr_block = var.vpc_cidr_block
 
  tags = {
    Name = "Reis_tech221_VPC_terraform"
@@ -108,6 +108,8 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "public_subnets" {
  vpc_id     = aws_vpc.main.id
  cidr_block = var.public_subnet_cidrs
+ map_public_ip_on_launch = "true"
+ availability_zone = "eu-west-1"
 
  tags = {
    Name = "Reis_tech221_public_subnet"
@@ -137,12 +139,12 @@ resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block = var.rt_cidr_block
     gateway_id = aws_internet_gateway.gw.id
   }
-  
-  route {  
-    ipv6_cidr_block = "::/0"
+ 
+  route {
+    ipv6_cidr_block = var.ipv6_cidr_block
     gateway_id      = aws_internet_gateway.gw.id
   }
     
@@ -168,16 +170,38 @@ resource "aws_security_group" "web_sg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.rt_cidr_block]
   }
   
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.rt_cidr_block]
+  }
+
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = [var.rt_cidr_block]
+  }
+
+# Outbound rules 
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1" # allow all
+    cidr_blocks = [var.rt_cidr_block]
+  }
+
+  tags = {
+        Name = "Reis_Tech221_SG"
   }
 }
+
+
 
 # let's create a service on AWS
 # which service -EC2
@@ -216,6 +240,18 @@ variable "private_subnet_cidrs" {
  type        = string
  description = "Private Subnet CIDR values"
  default     = "10.0.2.0/24"
+}
+
+variable "vpc_cidr_block" {
+    default = "10.0.0.0/16"
+}
+
+variable "rt_cidr_block" {
+    default = "0.0.0.0/0"
+}
+
+variable "ipv6_cidr_block" {
+    default = "::/0"
 }
 ```
 
