@@ -91,7 +91,9 @@ terraform destroy
 
 ![](TerraformHybrid.jpeg)
 
-1. within our main.tf we need to add this code for the different components of a VPC
+ within our main.tf we need to add this code for the different components of a VPC
+
+1. This block of code creates our VPC
 
 ```
 # Create VPC within AWS resource
@@ -102,9 +104,11 @@ resource "aws_vpc" "main" {
    Name = "Reis_tech221_VPC_terraform"
  }
 }
+```
 
+2. This will set up the subnets within our VPC.
 
-# Create Subnets
+```
 resource "aws_subnet" "public_subnets" {
  vpc_id     = aws_vpc.main.id
  cidr_block = var.public_subnet_cidrs
@@ -124,8 +128,11 @@ resource "aws_subnet" "private_subnets" {
    Name = "Reis_tech221_private_subnet"
  }
 }
+```
 
-# Set-up internet Gate-way
+3. Next we need to set up the internet gateway
+
+```
 resource "aws_internet_gateway" "gw" {
  vpc_id = aws_vpc.main.id
  
@@ -133,8 +140,11 @@ resource "aws_internet_gateway" "gw" {
    Name = "Reis_tech221_VPC_IG_Terraform"
  }
 }
-  
-# Create Route Table
+```
+
+4. Now we set-up the route table
+
+```
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.main.id
 
@@ -160,8 +170,11 @@ resource "aws_route_table_association" "public_1_rt_a" {
   route_table_id = aws_route_table.public_rt.id
 }
 
-# Create SG
+```
 
+5. Now we create the security groups
+
+```
 resource "aws_security_group" "web_sg" {
   name   = "HTTP and SSH" 
   vpc_id = aws_vpc.main.id
@@ -201,8 +214,11 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
+```
 
+6. We Can now setup our EC2 instance
 
+```
 # let's create a service on AWS
 # which service -EC2
 resource "aws_instance" "app_instance" {
@@ -223,7 +239,9 @@ resource "aws_instance" "app_instance" {
 }  
 ```
 
-2. Then within our `variable.tf` file we need to add
+#### Setting up the variable file
+
+1. Then within our `variable.tf` file we need to add
 
 ```
 variable "ami_id" {
@@ -255,7 +273,7 @@ variable "ipv6_cidr_block" {
 }
 ```
 
-3. On Our git bash terminal we can now do 
+2. On Our git bash terminal we can now do 
 
 ```
 terraform plan
